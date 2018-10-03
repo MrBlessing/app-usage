@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,9 +31,12 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private TextView text;
     private RecyclerView recyclerView;
     private FloatingActionButton button;
+    private String timeType=null;
+    private boolean Gres=false;
+    private  List<UsageStats> stats;
+    private RecyclerAdapter adapter;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -49,10 +53,10 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void setEvent() {
 
-        List<UsageStats> stats =AppInfo.getStats(this,"day");
+        stats =AppInfo.getStats(this,"day");
 
         //设置列表
-        RecyclerAdapter adapter = new RecyclerAdapter(stats,this);
+        adapter = new RecyclerAdapter(stats,this);
         LinearLayoutManager manager1 = new LinearLayoutManager(this);
         manager1.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(manager1);
@@ -67,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void findView() {
-        text = findViewById(R.id.text);
         recyclerView = findViewById(R.id.recyclerView);
         button = findViewById(R.id.main_floatActionButton);
     }
@@ -98,26 +101,49 @@ public class MainActivity extends AppCompatActivity {
     }
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private Dialog setDialog(){
-        AlertDialog.Builder bulider = new AlertDialog.Builder(MainActivity.this);
-        bulider.setTitle("设置日期");
-        bulider.setView(R.layout.dialog_layout);
-        //设置内部控件
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("设置日期");
+
+        //设置弹窗内部控件
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.dialog_layout,null);
-        final EditText text = view.findViewById(R.id.dialog_editText);
+        final RadioGroup group = view.findViewById(R.id.dialog_radioGroup);
 
-        bulider.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+        //设置单选框的监听
+        group.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                switch (i){
+                    case R.id.group_day :
+                        timeType = "day"; Toast.makeText(MainActivity.this, "day", Toast.LENGTH_SHORT).show();
+                        Gres = true;
+                        break;
+                    case R.id.group_week :
+                        timeType = "week"; Toast.makeText(MainActivity.this, "week", Toast.LENGTH_SHORT).show();
+                        Gres = true;
+                        break;
+                }
+            }
+        });
+
+        builder.setView(view);
+
+        builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                //刷新列表
+                if(Gres) {
+                    stats = AppInfo.getStats(MainActivity.this, timeType);
+                    recyclerView.setAdapter(new RecyclerAdapter(stats,MainActivity.this));
+                }
+            }
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
 
             }
         });
-        bulider.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-            }
-        });
-        return   bulider.create();
+        return   builder.create();
     }
 }

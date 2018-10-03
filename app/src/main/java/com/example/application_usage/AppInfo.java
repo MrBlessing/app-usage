@@ -41,10 +41,18 @@ public class AppInfo {
         //筛选UsageStats
         //条件时间不为0，名字中不能有.
         for(int i=0;i<stats.size();i++){
-            String appName = AppInfo.getAppName(context,stats.get(i).getPackageName());
+            String packageName = stats.get(i).getPackageName();
+            String appName = AppInfo.getAppName(context,packageName);
+            //筛选出一些已经删除的应用信息
+            if(appName == null ){
+                stats.remove(i);
+                i--;
+                continue;
+            }
             if(appName.contains(".")){
                 stats.remove(i);
                 i--;
+                continue;
             }
             long apptime = stats.get(i).getTotalTimeInForeground();
             if(apptime<1000){
@@ -64,8 +72,6 @@ public class AppInfo {
                 }
             }
         }
-
-
         return stats;
     }
 
@@ -77,7 +83,10 @@ public class AppInfo {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        return (String) info.loadLabel(manager);
+        if(info != null){
+            return (String) info.loadLabel(manager);
+        }
+        else return null;
     }
 
     public static Drawable getAppIcon(Context context, String packageName){
@@ -88,6 +97,9 @@ public class AppInfo {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        return info.loadIcon(manager);
+        if(info != null){
+            return  info.loadIcon(manager);
+        }
+        else return null;
     }
 }
